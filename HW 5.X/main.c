@@ -111,16 +111,16 @@ int main() {
     char array[100];
     
     __builtin_enable_interrupts();
-    
+    LCD_clearScreen(BLACK);
     while(1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 		// remember the core timer runs at half the CPU speed
         _CP0_SET_COUNT(0);                   // set core timer to 0
         LATAbits.LATA4 = 0;       // intialize LED on
-        LCD_clearScreen(RED);
-        sprintf(array,"HELLO WORLD %i!",x);
-        LCD_drawString(28,32,array);
-        LCD_drawChar(10,10,'S');
+        LCD_clearScreen(BLACK);
+        //sprintf(array,"HELLO WORLD %i!",x);
+        //LCD_drawString(28,32,array);
+        //LCD_drawChar(10,10,'S');
         
         
         
