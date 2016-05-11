@@ -40,46 +40,52 @@
 void LCD_drawChar(unsigned short, unsigned short, char);
 
 // LCD functions//
-void LCD_drawChar(unsigned short x2, unsigned short y2, char symbol){
-    int set, x, y, ascii_row;
-    int col = 0;
-    int bit_index = 0;
-    char bit_map;
+void LCD_drawChar(unsigned short xStart, unsigned short yStart, char symbol){
+    int set, xpos, ypos, asciiIndex;
+    int column = 0;
+    int bitIndex = 0;
+    char bitMap;
     
-    ascii_row = (int)(symbol - 32);
+    asciiIndex = (int)(symbol - 32);
     
-    while (col < 5){
-        bit_index = 0;
-        bit_map = ASCII[ascii_row][col];
-        while (bit_index < 8){
-            set = (bit_map >> bit_index) & 0x01;
-            x = x2 + col;
-            y = y2 + bit_index;
-            if (set){
-                LCD_drawPixel(x, y, YELLOW);
+    while (column < 5){
+        bitIndex = 0;
+        bitMap = ASCII[asciiIndex][column];
+        while (bitIndex < 8){
+            set = (bitMap >> bitIndex) & 0x01;
+            xpos = xStart + column;
+            ypos = yStart + bitIndex;
+            if (xpos <= 128 && ypos <= 128) {
+                if (set) {
+                    LCD_drawPixel(xpos, ypos, RED);
+                } else {
+                    LCD_drawPixel(xpos, ypos, BLACK);
+                }
             }
-            else{
-                LCD_drawPixel(x, y, BLACK);
-            }
-            bit_index++;
+            bitIndex++;
         }
-        col++;
+        column++;
     }
 }
 
-void LCD_drawString(unsigned short x, unsigned short y, char *array){
-    int i = 0;
-    int begin_pos = x;
-    while (array[i]!=0){
-        if (array[i]=='\n'){
-            y = y + 10;
-            x = begin_pos;
-            i++;
+void LCD_drawString(unsigned short left, unsigned short top, char *text){
+    int ii=0;
+    int xpos=left;
+   
+    while (text[ii]!=0){
+        // Identify if new line character, if so jump down 
+        if (text[ii]=='\n'){
+            top = top + 10;
+            xpos = left;
+            ii++;
             continue;
         }
-        LCD_drawChar(x,y,array[i]);
-        x = x + 6;
-        i++;
+        
+        LCD_drawChar(xpos,top,text[ii]);
+        xpos = xpos + 6; // increment to starting spot for next char
+        
+        ii++;
+        
     }
 }
 
@@ -107,24 +113,24 @@ int main() {
     SPI1_init();
     LCD_init();
     
-    int x = 1337;
+    int leet = 1337;
     char array[100];
     
     __builtin_enable_interrupts();
-    LCD_clearScreen(BLACK);
+    
+    LCD_clearScreen(BLACK); // Clear screen to start
+    
     while(1) {
-	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
-		// remember the core timer runs at half the CPU speed
-        _CP0_SET_COUNT(0);                   // set core timer to 0
+	    
+        _CP0_SET_COUNT(0);         // set core timer to 0
         LATAbits.LATA4 = 0;       // intialize LED on
         LCD_clearScreen(BLACK);
-        //sprintf(array,"HELLO WORLD %i!",x);
-        //LCD_drawString(28,32,array);
-        //LCD_drawChar(10,10,'S');
+        sprintf(array,"Hello world %i!",leet);
+        LCD_drawString(28,32,array);
         
         
         
-        while (_CP0_GET_COUNT() < 48000000){;}
+        while (1){;}
                 
 
     }  
