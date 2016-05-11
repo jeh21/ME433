@@ -37,57 +37,11 @@
 #pragma config FUSBIDIO = ON // USB pins controlled by USB module
 #pragma config FVBUSONIO = ON // USB BUSON controlled by USB module
 
-void LCD_drawChar(unsigned short, unsigned short, char);
+// LCD function prototypes//
 
-// LCD functions//
-void LCD_drawChar(unsigned short xStart, unsigned short yStart, char symbol){
-    int set, xpos, ypos, asciiIndex;
-    int column = 0;
-    int bitIndex = 0;
-    char bitMap;
-    
-    asciiIndex = (int)(symbol - 32);
-    
-    while (column < 5){
-        bitIndex = 0;
-        bitMap = ASCII[asciiIndex][column];
-        while (bitIndex < 8){
-            set = (bitMap >> bitIndex) & 0x01;
-            xpos = xStart + column;
-            ypos = yStart + bitIndex;
-            if (xpos <= 128 && ypos <= 128) {
-                if (set) {
-                    LCD_drawPixel(xpos, ypos, RED);
-                } else {
-                    LCD_drawPixel(xpos, ypos, BLACK);
-                }
-            }
-            bitIndex++;
-        }
-        column++;
-    }
-}
+void LCD_drawString(unsigned short left, unsigned short top, char *text);
+void LCD_drawChar(unsigned short xStart, unsigned short yStart, char symbol);
 
-void LCD_drawString(unsigned short left, unsigned short top, char *text){
-    int ii=0;
-    int xpos=left;
-   
-    while (text[ii]!=0){
-        // Identify if new line character, if so jump down 
-        if (text[ii]=='\n'){
-            top = top + 10;
-            xpos = left;
-            ii++;
-            continue;
-        }
-        
-        LCD_drawChar(xpos,top,text[ii]);
-        xpos = xpos + 6; // increment to starting spot for next char
-        
-        ii++;
-        
-    }
-}
 
 int main() {
 
@@ -109,30 +63,80 @@ int main() {
     TRISAbits.TRISA4 = 0;     // ouput
     TRISBbits.TRISB4 = 1;     // input
 
-    //LATAbits.LATA4 = 1;       // intialize LED on
     SPI1_init();
     LCD_init();
     
-    int leet = 1337;
-    char array[100];
+    int leet = 1337;        // for converting to string
+    char text[100];         // initialized text array to store string
     
     __builtin_enable_interrupts();
     
-    LCD_clearScreen(BLACK); // Clear screen to start
     
     while(1) {
 	    
         _CP0_SET_COUNT(0);         // set core timer to 0
-        LATAbits.LATA4 = 0;       // intialize LED on
-        LCD_clearScreen(BLACK);
-        sprintf(array,"Hello world %i!",leet);
-        LCD_drawString(28,32,array);
-        
-        
-        
+        LCD_clearScreen(BLACK);    // clear screen to start
+        sprintf(text,"Hello world %i!",leet);  // create string to print
+        LCD_drawString(28,32,text);      // send string to LCD
+     
+        // infinite loop to keep screen unchanged
         while (1){;}
                 
 
     }  
     
+}
+
+
+
+// LCD Functions
+void LCD_drawChar(unsigned short xStart, unsigned short yStart, char symbol){
+    int set, xpos, ypos, asciiIndex;
+    int row;       // keeps track of row, 8 rows per character
+    char bitMap;   // char design
+    int column;    // keeps track of column, 5 coumns per character
+    asciiIndex = (int)(symbol - 32);
+    
+    // Iterate over each of the 5 columns
+    for (column = 0;column<5;column++){
+        row = 0;
+        bitMap = ASCII[asciiIndex][column];
+        // Iterate over each of the 8 rows per column
+        for (row=0;row < 8;row++){
+            set = (bitMap >> row) & 0x01;
+            xpos = xStart + column;   // x coordinate of pixel
+            ypos = yStart + row;      // y coordinate of pixel
+            
+            // Check if pixel exists on LCD, draw only if it does
+            if (xpos <= 128 && ypos <= 128) {
+                if (set) {
+                    LCD_drawPixel(xpos, ypos, RED);  // text
+                } else {
+                    LCD_drawPixel(xpos, ypos, BLACK); // background
+                }
+            }
+        }
+        
+    }
+}
+
+void LCD_drawString(unsigned short left, unsigned short top, char *text){
+    int ii=0;
+    int xpos=left;
+   
+    while (text[ii]!=0){
+        // Identify if new line character, if so jump down 10 pixels and start at left
+        if (text[ii]=='\n'){
+            top = top + 10;
+            xpos = left;
+            ii++;
+            continue;
+        }
+        
+        LCD_drawChar(xpos,top,text[ii]);  // Draw the character on the LCD
+        xpos = xpos + 6; // increment to starting spot for next char, 1px spacing
+        
+        ii++;  // increment
+        
+    }
 }
