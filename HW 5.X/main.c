@@ -37,11 +37,6 @@
 #pragma config FUSBIDIO = ON // USB pins controlled by USB module
 #pragma config FVBUSONIO = ON // USB BUSON controlled by USB module
 
-// LCD function prototypes//
-
-void LCD_drawString(unsigned short left, unsigned short top, char *text);
-void LCD_drawChar(unsigned short xStart, unsigned short yStart, char symbol);
-
 
 int main() {
 
@@ -85,58 +80,4 @@ int main() {
 
     }  
     
-}
-
-
-
-// LCD Functions
-void LCD_drawChar(unsigned short xStart, unsigned short yStart, char symbol){
-    int set, xpos, ypos, asciiIndex;
-    int row;       // keeps track of row, 8 rows per character
-    char bitMap;   // char design
-    int column;    // keeps track of column, 5 coumns per character
-    asciiIndex = (int)(symbol - 32);
-    
-    // Iterate over each of the 5 columns
-    for (column = 0;column<5;column++){
-        row = 0;
-        bitMap = ASCII[asciiIndex][column];
-        // Iterate over each of the 8 rows per column
-        for (row=0;row < 8;row++){
-            set = (bitMap >> row) & 0x01;
-            xpos = xStart + column;   // x coordinate of pixel
-            ypos = yStart + row;      // y coordinate of pixel
-            
-            // Check if pixel exists on LCD, draw only if it does
-            if (xpos <= 128 && ypos <= 128) {
-                if (set) {
-                    LCD_drawPixel(xpos, ypos, RED);  // text
-                } else {
-                    LCD_drawPixel(xpos, ypos, BLACK); // background
-                }
-            }
-        }
-        
-    }
-}
-
-void LCD_drawString(unsigned short left, unsigned short top, char *text){
-    int ii=0;
-    int xpos=left;
-   
-    while (text[ii]!=0){
-        // Identify if new line character, if so jump down 10 pixels and start at left
-        if (text[ii]=='\n'){
-            top = top + 10;
-            xpos = left;
-            ii++;
-            continue;
-        }
-        
-        LCD_drawChar(xpos,top,text[ii]);  // Draw the character on the LCD
-        xpos = xpos + 6; // increment to starting spot for next char, 1px spacing
-        
-        ii++;  // increment
-        
-    }
 }
