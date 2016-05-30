@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<project>                                  
+  <executable name="dist/pic32mx_usb_sk2_int_dyn/production/hid_mouse.X.production.elf">                 
+    <memory name="program">                 
+      <units>bytes</units>                 
+      <length>132240</length>                 
+      <used>34140</used>                     
+      <free>98100</free>                     
+    </memory>                              
+    <memory name="data">              
+      <units>bytes</units>                 
+      <length>32768</length>                 
+      <used>996</used>                     
+      <free>31772</free>                     
+    </memory>                              
+  </executable>                            
+</project>                                 
