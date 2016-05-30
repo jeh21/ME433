@@ -98,12 +98,12 @@ void init_IMU(void);
 void I2C_read_multiple(char address, char Register, unsigned char * data, char length);
 void LCD_drawString(unsigned short x, unsigned short y, char *array);
 
-//variable init//
-    unsigned char test;
+//variable initialization//
     unsigned char output[14];
-    signed short scale = 1000;
-    signed short g_x,g_y,g_z,xl_x,xl_y,xl_z,temp;
-    float xl_xf,xl_yf,xl_zf,g_xf,g_yf,g_zf;
+    signed short scaleA = 16383;
+    signed short scaleG = 134;
+    signed short gyroX,gyroY,gyroZ,accelX,accelY,accelZ,temp;
+    float accelXf,accelYf,accelZf,gyroXf,gyroYf,gyroZf;
     char array[100];
 
 
@@ -148,33 +148,33 @@ int main() {
         I2C_read_multiple(IMU_ADDRESS<<1,OUT_TEMP_L,output,14);
         
         temp = (output[0] | (output[1] << 8));
-        g_x = (output[2] | (output[3] << 8));
-        g_y = (output[4] | (output[5] << 8));
-        g_z = (output[6] | (output[7] << 8));
-        xl_x = (output[8] | (output[9] << 8));
-        xl_y = (output[10] | (output[11] << 8));
-        xl_z = (output[14] | (output[13] << 8));
+        gyroX = (output[2] | (output[3] << 8));
+        gyroY = (output[4] | (output[5] << 8));
+        gyroZ = (output[6] | (output[7] << 8));
+        accelX = (output[8] | (output[9] << 8));
+        accelY = (output[10] | (output[11] << 8));
+        accelZ = (output[14] | (output[13] << 8));
         
-        //xl_x = xl_x/scale;
-        xl_xf = ((float)xl_x)/16383;
-        xl_yf = ((float)xl_y)/16383;
-        xl_zf = ((float)xl_z)/16383;
-        g_xf = ((float)g_x)/134;
-        g_yf = ((float)g_y)/134;
-        g_zf = ((float)g_z)/134;
+        //accelX = accelX/scale;
+        accelXf = ((float)accelX)/scaleA;
+        accelYf = ((float)accelY)/scaleA;
+        accelZf = ((float)accelZ)/scaleA;
+        gyroXf = ((float)gyroX)/scaleG;
+        gyroYf = ((float)gyroY)/scaleG;
+        gyroZf = ((float)gyroZ)/scaleG;
         
         // Write acceleration and gyro values to LCD
-        sprintf(array,"accelX(g): %.2f   ",xl_xf);
+        sprintf(array,"accelX(g): %.2f   ",accelXf);
         LCD_drawString(5,12,array);
-        sprintf(array,"accelY(g): %.2f   ",xl_yf);
+        sprintf(array,"accelY(g): %.2f   ",accelYf);
         LCD_drawString(5,27,array);
-        sprintf(array,"accelZ(g): %.2f   ",xl_zf);
+        sprintf(array,"accelZ(g): %.2f   ",accelZf);
         LCD_drawString(5,42,array);
-        sprintf(array,"gyroX(dps): %.2f   ",g_xf);
+        sprintf(array,"gyroX(dps): %.2f   ",gyroXf);
         LCD_drawString(5,57,array);
-        sprintf(array,"gyroY(dps): %.2f   ",g_yf);
+        sprintf(array,"gyroY(dps): %.2f   ",gyroYf);
         LCD_drawString(5,72,array);
-        sprintf(array,"gyroZ(dps): %.2f   ",g_zf);
+        sprintf(array,"gyroZ(dps): %.2f   ",gyroZf);
         LCD_drawString(5,87,array);
         sprintf(array,"TEMP: %i   ",temp);
         LCD_drawString(5,102,array);
