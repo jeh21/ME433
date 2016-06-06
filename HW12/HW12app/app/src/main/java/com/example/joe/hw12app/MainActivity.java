@@ -4,6 +4,7 @@ package com.example.joe.hw12app;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -17,6 +18,9 @@ import java.io.IOException;
 import static android.graphics.Color.blue;
 import static android.graphics.Color.green;
 import static android.graphics.Color.red;
+import static android.graphics.Color.rgb;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 
 
 public class MainActivity extends Activity implements TextureView.SurfaceTextureListener {
@@ -29,6 +33,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private Paint paint1 = new Paint();
     private TextView mTextView;
 
+    SeekBar myControl;
+    TextView myTextView;
 
     static long prevtime = 0; // for FPS calculation
 
@@ -37,6 +43,10 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // keeps the screen from turning off
 
+        myControl = (SeekBar) findViewById(R.id.seek1);
+        myTextView = (TextView) findViewById(R.id.textView01);
+        myTextView.setText("Start Sliding!");
+        setMyControlListener();
         mSurfaceView = (SurfaceView) findViewById(R.id.surfaceview);
         mSurfaceHolder = mSurfaceView.getHolder();
 
@@ -49,12 +59,36 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         paint1.setTextSize(24);
     }
 
+    private void setMyControlListener() {
+        myControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+
+            int progressChanged = 0;
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progressChanged = progress;
+                myTextView.setText("Threshold: " + (int)(progress*255/100));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+
+        });
+    }
+
 
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         mCamera = Camera.open();
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.setPreviewSize(640, 480);
-        parameters.setColorEffect(Camera.Parameters.EFFECT_MONO); // black and white
+        parameters.setColorEffect(Camera.Parameters.EFFECT_NONE); // black and white
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY); // no autofocusing
         mCamera.setParameters(parameters);
         mCamera.setDisplayOrientation(90); // rotate to portrait mode
@@ -81,34 +115,68 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
         // Invoked every time there's a new Camera preview frame
         mTextureView.getBitmap(bmp);
-
         final Canvas c = mSurfaceHolder.lockCanvas();
         if (c != null) {
 
             int[] pixels = new int[bmp.getWidth()];
-            int startY = 15; // which row in the bitmap to analyse to read
-            // only look at one row in the image
-            bmp.getPixels(pixels, 0, bmp.getWidth(), 0, startY, bmp.getWidth(), 1); // (array name, offset inside array, stride (size of row), start x, start y, num pixels to read per row, num rows to read)
-
-            // pixels[] is the RGBA data (in black an white).
-            // instead of doing center of mass on it, decide if each pixel is dark enough to consider black or white
-            // then do a center of mass on the thresholded array
+            int Ytest=250;
+            int wd=100;
             int[] thresholdedPixels = new int[bmp.getWidth()];
-            int wbTotal = 0; // total mass
-            int wbCOM = 0; // total (mass time position)
-            for (int i = 0; i < bmp.getWidth(); i++) {
-                // sum the red, green and blue, subtract from 255 to get the darkness of the pixel.
-                // if it is greater than some value (600 here), consider it black
-                // play with the 600 value if you are having issues reliably seeing the line
-                if (255*3-(red(pixels[i])+green(pixels[i])+blue(pixels[i])) > 600) {
-                    thresholdedPixels[i] = 255*3;
+            int[] thresholdedColors = new int[bmp.getWidth()];
+            int threshold = (int)(myControl.getProgress() * 255 / 100);
+            int wbTotal=0; // total mass
+            int wbCOM=0; // total (mass time position)
+            int COM2=0;
+            // only look at one row in the image
+
+            for(int jj=0; jj<wd;jj++) {
+
+
+                bmp.getPixels(pixels, 0, bmp.getWidth(), 0, Ytest, bmp.getWidth(), 1);
+                wbTotal = 0;
+                wbCOM = 0;
+
+
+               // pixels[] is the RGBA data (in black an white).
+               // instead of doing center of mass on it, decide if each pixel is dark enough to consider black or white
+               // then do a center of mass on the thresholded array
+
+               for (int i = 0; i < bmp.getWidth(); i++) {
+                   // sum the red, green and blue, subtract from 255 to get the darkness of the pixel.
+                   // if it is greater than some value (600 here), consider it black
+                   // play with the 600 value if you are having issues reliably seeing the line
+
+                   if (255 - (green(pixels[i])-red(pixels[i]))  > threshold) {
+                       thresholdedPixels[i] = 255;
+                       thresholdedColors[i]=rgb(0,0,0);
+                   } else {
+                       thresholdedPixels[i] = 0;
+                       thresholdedColors[i]=rgb(0,255,0);
+                   }
+                   wbTotal = wbTotal + thresholdedPixels[i];
+                   wbCOM = wbCOM + thresholdedPixels[i] * i;
+
+               }
+
+                if(jj==wd/2){
+
+                    //watch out for divide by 0
+                    if (wbTotal<=0) {
+                        COM2 = bmp.getWidth()/2;
+                    }
+                    else {
+                        COM2 = wbCOM/wbTotal;
+                    }
+
+                    // draw a circle where you think the COM is
+                    canvas.drawCircle(COM2, Ytest, 5, paint1);
+
                 }
-                else {
-                    thresholdedPixels[i] = 0;
-                }
-                wbTotal = wbTotal + thresholdedPixels[i];
-                wbCOM = wbCOM + thresholdedPixels[i]*i;
-            }
+                bmp.setPixels(thresholdedColors, 0, bmp.getWidth(), 0, Ytest, bmp.getWidth(), 1);
+
+                Ytest=Ytest+1;
+           }
+
             int COM;
             //watch out for divide by 0
             if (wbTotal<=0) {
@@ -119,11 +187,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             }
 
             // draw a circle where you think the COM is
-            canvas.drawCircle(COM, startY, 5, paint1);
+            canvas.drawCircle(COM, Ytest, 5, paint1);
 
             // also write the value as text
             canvas.drawText("COM = " + COM, 10, 200, paint1);
+            canvas.drawText("COM2 = " + COM2, 10, 220, paint1);
             c.drawBitmap(bmp, 0, 0, null);
+            // also write the value as text
+
             mSurfaceHolder.unlockCanvasAndPost(c);
 
             // calculate the FPS to see how fast the code is running
