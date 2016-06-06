@@ -19,7 +19,7 @@
  * Project home page: https://github.com/mik3y/usb-serial-for-android
  */
 
-package src.com.hoho.android.usbserial.examples;
+package com.hoho.android.usbserial.examples;
 
 import android.app.Activity;
 import android.content.Context;
@@ -35,7 +35,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.hoho.android.usbserial.driver.UsbSerialPort;
-import com.hoho.android.usbserial.examples.R;
 import com.hoho.android.usbserial.util.HexDump;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 
@@ -172,8 +171,9 @@ public class SerialConsoleActivity extends Activity {
                 showStatus(mDumpTextView, "DSR - Data Set Ready", sPort.getDSR());
                 showStatus(mDumpTextView, "RI  - Ring Indicator", sPort.getRI());
                 showStatus(mDumpTextView, "RTS - Request To Send", sPort.getRTS());
+
                 int i = 100;
-                String sendString = String.valueOf(i) + "\n";
+                String sendString = String.valueOf(i) + '\n';
                 try {
                     sPort.write(sendString.getBytes(),10); // 10 is the timeout
                 }
